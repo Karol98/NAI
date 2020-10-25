@@ -1,0 +1,66 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+#include <iostream>
+#include <cstdlib>
+
+using namespace cv;
+using namespace std;
+
+int main( int argc, char** argv ) {
+    bool capturing = true;
+    bool obroc = false;
+    // Question for you
+
+    VideoCapture cap(0);
+    if ( !cap.isOpened() ) {
+        cerr << "error opening frames source" << endl;
+        return -1;
+    }
+    cout << "Video size: " << cap.get( CAP_PROP_FRAME_WIDTH ) 
+    << "x" << cap.get( CAP_PROP_FRAME_HEIGHT ) << endl;
+
+    int h1 = 0, s1 = 0, v1 = 0, h2 = 255, s2 = 255, v2 = 255; 
+
+    int x = 320, y = 320;
+      if(argc > 1) {
+        x = atoi(argv[1]);
+        y = atoi(argv[2]);
+    }
+
+    namedWindow("oknoHSV",WINDOW_AUTOSIZE);
+    createTrackbar("h - min","oknoHSV",&h1,255);
+    createTrackbar("s - min","oknoHSV",&s1,255);
+    createTrackbar("v - min","oknoHSV",&v1,255);
+    createTrackbar("h - max","oknoHSV",&h2,255);
+    createTrackbar("s - max","oknoHSV",&s2,255);
+    createTrackbar("v - max","oknoHSV",&v2,255);
+
+    do {
+        Mat frame;
+        Mat frame2;
+
+        if ( cap.read( frame ) ) { 
+            GaussianBlur(frame, frame, Size( 25, 25 ), 0);
+            resize(frame,frame,{x,y});
+            cvtColor(frame, frame, COLOR_BGR2HSV);
+            imshow( "oknoHSV", frame );
+            inRange(frame,Scalar(h1,s1,v1),Scalar(h2,s2,v2),frame2);
+            imshow("oknoInRange", frame2);
+
+        } else {
+            // stream finished
+            capturing = false;
+        }
+        char key = waitKey( 1000.0/60.0 )&0x0ff;
+        //czekaj na klawisz, sprawdz czy to jest 'esc'
+        if( key == 'x' ) {
+            auto r = selectROI("oknoInRange",frame2);
+            Mat roi = frame2(r);
+            imwrite("roi.jpg",roi);
+        }
+        if( key == 27) {
+            break;
+        }
+    } while( capturing );
+    return 0;
+}
