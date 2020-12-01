@@ -6,116 +6,105 @@
 #include <cmath>
 #include <numeric>
 #include <algorithm>
+#include<fstream>
 
 using namespace std;
 random_device r;
 default_random_engine e1(r());
+ofstream zapis("dane.txt");
 
-auto hill_climbing_r_alg = [](auto get_random_sol, auto get_all_neighbours, auto goal, int max_iterations) {
-    auto current_solution = get_random_sol();
-    for (int iteration = 0; iteration < max_iterations; iteration++)
-    {
-        auto next_solutions = get_all_neighbours(current_solution);
-        uniform_int_distribution<int> uniform_dist(0, next_solutions.size()-1);
-        auto next_sol = next_solutions.at(uniform_dist(e1));
-        if (goal(current_solution) > goal(next_sol)) {
-            current_solution = next_sol;
-        }
-        
-        
-    }
-    return current_solution;
-};
-
-int main(int argc, char** argv)
-{  
-
-   int dl = atoi(argv[1]);
-   int dr = atoi(argv[2]);
-    auto sphere_f = [](vector<double> x) {
-        double sum = 0;
-        for (auto e : x)
+    auto hill_climbing_r_alg = [](auto get_random_sol, auto get_all_neighbours, auto goal, int max_iterations) {
+        auto current_solution = get_random_sol();
+        for (int iteration = 0; iteration < max_iterations; iteration++)
         {
-            sum += e * e;
+            auto next_solutions = get_all_neighbours(current_solution);
+            uniform_int_distribution<int> uniform_dist(0, next_solutions.size()-1);
+            auto next_sol = next_solutions.at(uniform_dist(e1));
+            if (goal(current_solution) > goal(next_sol)) {
+                current_solution = next_sol;
+            }
+            
+            
         }
-        return sum;
+        return current_solution;
     };
 
-    auto himmelblau = [](vector<double> d) {
-        double x = d.at(0);
-        double y = d.at(1);
-        return pow(x * x + y - 11, 2.0) + pow(x + y * y - 7, 2);
-    };
-   
-    auto beale = [](vector<double> d) {
-        double x = d.at(0);
-        double y = d.at(1);
-        return pow(1.5-x+x*y,2.0)+ pow(2.25-x+x*pow(y,2),2)+pow(2.625-x+x*pow(y,3),2);
+    int main(int argc, char** argv)
+    {  
 
-    };
-    auto booth = [](vector<double> d) {
-        double x = d.at(0);
-        double y = d.at(1);
-        return pow(x+2*y-7,2)+pow(2*x+y-5,2);
-
-    };
-    auto matyas = [](vector<double> d) {
-        double x = d.at(0);
-        double y = d.at(1);
-        return 0.26*(pow(x,2)+pow(y,2))-0.48*x*y;
-
-    };
-
-  
+    int dl = atoi(argv[1]);
+    int dr = atoi(argv[2]);
+    string fun(argv[3]);
     
-    auto optimize = [](auto function,int x,int y){
-        int max_iterations = 1000;
-        uniform_real_distribution<double> uniform_dist(-5,5);
-        auto neighbours = [](vector<double> x, double dx = 0.001) {
-        vector<vector<double>> ret;
-        for (int i = 0; i < x.size(); i++)
-        {
-            auto nx = x;
-            nx[i] += dx;
-            ret.push_back(nx);
-            nx[i] -= 2.0 * dx;
-            ret.push_back(nx);
-        }
-        return ret;
-    };
-         auto init = [&uniform_dist]() {
-        vector<double> x(2);
-        x[0] = uniform_dist(e1);
-        x[1] = uniform_dist(e1);
-        return x;
-    };
+        auto beale = [](vector<double> d) {
+            double x = d.at(0);
+            double y = d.at(1);
+            auto pom = pow(1.5-x+x*y,2.0)+ pow(2.25-x+x*pow(y,2),2)+pow(2.625-x+x*pow(y,3),2);
+            zapis<<pom<<endl;
+            return pom;
 
-       auto solution = hill_climbing_r_alg(
-       init,
-       neighbours,
-       function,
-       max_iterations);
+        };
+        auto booth = [](vector<double> d) {
+            double x = d.at(0);
+            double y = d.at(1);
+            return pow(x+2*y-7,2)+pow(2*x+y-5,2);
 
-   cout << "results: [ ";
-   for (auto e : solution)
-     cout << e << " ";
-    cout << "] -> " << function(solution) << endl;
+        };
+        auto matyas = [](vector<double> d) {
+            double x = d.at(0);
+            double y = d.at(1);
+            return 0.26*(pow(x,2)+pow(y,2))-0.48*x*y;
 
-    };
+        };
+        
+        auto optimize = [](auto function,int x,int y){
+            int max_iterations = 1000;
+            uniform_real_distribution<double> uniform_dist(x,y);
+            auto neighbours = [](vector<double> x, double dx = 0.001) {
+            vector<vector<double>> ret;
+            for (int i = 0; i < x.size(); i++)
+            {
+                auto nx = x;
+                nx[i] += dx;
+                ret.push_back(nx);
+                nx[i] -= 2.0 * dx;
+                ret.push_back(nx);
+            }
+            return ret;
+        };
+        auto init = [&uniform_dist]() {
+            vector<double> x(2);
+            x[0] = uniform_dist(e1);
+            x[1] = uniform_dist(e1);
+            return x;
+        };
 
-    //beale -4.5 <= x,y <= 4.5
-    //booth -10 <= x,y <= 10
-    //matyas -10 <= x,y <= 10
+        auto solution = hill_climbing_r_alg(
+        init,
+        neighbours,
+        function,
+        max_iterations);
 
-        cout<<"matyas: "<<endl;
-        optimize(matyas,dl,dr);
-        cout<<"booth: "<<endl;
-        optimize(booth,dl,dr);
-        cout<<"beale: "<<endl;
-        optimize(beale,dl,dr);
-    
-    
+        cout << "results: [ ";
+        for (auto e : solution)
+            cout << e << " ";
+            cout << "] -> " << function(solution) << endl;
 
+            };
 
-
+       if(fun == "matyas") {
+           cout<<"Matyas function: "<<endl;
+           optimize(matyas,dl,dr);
+       }else
+       if(fun == "booth"){
+            cout<<"Booth function: "<<endl;
+            optimize(booth,dl,dr);
+       }else
+       if(fun == "beale"){
+           cout<<"Beale function: "<<endl;
+           optimize(beale,dl,dr);
+       }else
+       {
+           cout<<"Wrong arguments"<<endl;
+       }
 }
